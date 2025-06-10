@@ -1,0 +1,7 @@
+Hello! This is a test file.
+
+It contains a few lines of text in English.
+
+Let's see how well it translates to another language.
+
+Thank you!

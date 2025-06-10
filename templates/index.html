@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart Document Translator</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #e3f2fd, #ffffff);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      height: 100vh;
+    }
+
+    .container {
+      margin-top: 40px;
+      background: #fff;
+      padding: 30px 40px;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+      max-width: 600px;
+      width: 100%;
+    }
+
+    h1 {
+      color: #0077c2;
+      text-align: center;
+      margin-bottom: 24px;
+      font-size: 1.8rem;
+    }
+
+    label {
+      font-weight: 600;
+      display: block;
+      margin-bottom: 8px;
+      color: #333;
+    }
+
+    input[type="file"],
+    select {
+      width: 100%;
+      margin-bottom: 20px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #0077c2;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: #005999;
+    }
+
+    #output {
+      margin-top: 25px;
+      white-space: pre-wrap;
+      background: #f4f8fb;
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid #d1e3f3;
+      min-height: 120px;
+      color: #222;
+      font-size: 1rem;
+    }
+
+    @media (max-width: 640px) {
+      .container {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Smart Document Translator</h1>
+
+    <label for="fileInput">Upload Document (PDF/Image)</label>
+    <input type="file" id="fileInput" accept=".pdf,image/*" />
+
+    <label for="language">Select Target Language</label>
+    <select id="language">
+      <option value="en">English</option>
+      <option value="hi">Hindi</option>
+      <option value="fr">French</option>
+      <option value="es">Spanish</option>
+      <option value="de">German</option>
+    </select>
+
+    <button id="uploadBtn">Upload & Translate</button>
+
+    <div id="output" placeholder="Translation will appear here..."></div>
+  </div>
+
+<script>
+  document.getElementById("uploadBtn").addEventListener("click", async function () {
+  const fileInput = document.getElementById("fileInput");
+  const languageSelect = document.getElementById("language");
+  const outputDiv = document.getElementById("output");
+
+  const file = fileInput.files[0];
+  const selectedLanguage = languageSelect.value;
+
+  if (!file) {
+    alert("❗ Please select a file before uploading.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("target_language", selectedLanguage);
+
+  outputDiv.innerText = "⏳ Translating... Please wait.";
+
+  try {
+    const response = await fetch("http://127.0.0.1:5000/upload", {
+      method: "POST",
+      body: formData
+    });
+
+    if (!response.ok) {
+      throw new Error("Translation request failed.");
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+
+    const originalName = file.name;
+    const extension = originalName.split('.').pop();
+    const baseName = originalName.replace(/\.[^/.]+$/, "");
+    const translatedName = `${baseName}_translated.${extension === "pdf" ? "txt" : extension}`;
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = translatedName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    setTimeout(() => window.URL.revokeObjectURL(url), 2000);
+
+    outputDiv.innerText = `✅ Translation complete! File "${translatedName}" downloaded.`;
+    alert("✅ Translation complete! Your translated file has been downloaded.");
+  } catch (error) {
+    outputDiv.innerText = "❌ Error: Could not complete translation.";
+    console.error("Translation error:", error);
+    alert("⚠️ Translation failed. Please try again.");
+  }
+});
+
+</script>
+
+</body>
+</html>
